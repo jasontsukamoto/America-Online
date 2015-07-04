@@ -1,0 +1,37 @@
+#chatlog {
+  height: 400px;
+  width: 600px;
+  border: 1px solid black;
+  overflow: auto;
+}
+
+#chatlog p b {
+  margin-right: 6px;
+}
+
+#usersBar {
+  height: 40px;
+}
+
+#onlineText {
+  float: left;
+  display: inline-block;
+  width: 20%;
+  height: 100%;
+  background-color: yellow;
+}
+
+#usersOnline{
+  width: 80%;
+  height: 100%;
+  display: inline-block;
+  background-color: blue;
+}
+#onlineNickname li {
+  display: inline-block;
+  text-decoration: none;
+  height: 30px;
+  width: 50px;
+  border-radius: 10px;
+  background-color: red;
+}
