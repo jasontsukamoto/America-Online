@@ -6,28 +6,24 @@
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-
   <div id="registration">
-    <h2>Please type in your nickname and press enter.</h2>
-    <h3 id="nickname_error" class="error"></h3>
+    <h2>Please type in your username and press enter.</h2>
     <form action="" id="registration_form">
       <input type="text" id="nickname">
     </form>
+    <h3 id="nickname_error" class="error"></h3>
   </div>
 
   <div id="chatroom">
-    <div id="chatlog">
-      <div id="usersBar">
-        <div id="onlineText">Online:</div>
-        <div id="usersOnline">
-          <ul id="onlineNickname"></ul>
-        </div>
-      </div>
+    <div id="container"></div>
+    <div id="online_users">
+      <ul id="online_now"></ul>
     </div>
-      <form action="" id="messageForm">
-        <input type="text" id="message" placeholder="Message...">
-        <button id="send">Send</button>
-      </form>
+    <div id="chatlog"></div>
+    <form action="" id="message_form">
+      <input type="text" id="messages" placeholder="Messages...">
+      <button id="send">Send</button>
+    </form>
   </div>
 
   <script src="bower_components/jquery/dist/jquery.min.js"></script>
