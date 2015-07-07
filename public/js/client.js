@@ -7,9 +7,9 @@
   var USER_LEFT = 'user left';
   var UPDATE_NICKNAMES = 'update nicknames';
   var SOCKET_USER_MESSAGE = 'user message';
+  var SOCKET_USER_MENTION = 'user mention';
 
-
-
+  var myNickname = null;
   var socket = io(SERVER_ADDRESS);
 
   socket.on(SERVER_CONNECT, function() {
@@ -30,7 +30,15 @@
 
   //on user message
   socket.on(SOCKET_USER_MESSAGE, function(from, theMessage) {
-    addMessage(from, theMessage);
+    var parseMessage = theMessage.split(' ');
+    for (var i = 0; i < parseMessage.length; i++) {
+      if (parseMessage[i] === myNickname) {
+        parseMessage[i] = '<span class="highlightedNickname">' + myNickname + '</span>';
+      }
+    }
+    parseMessage = parseMessage.join(' ');
+    addMessage(from, parseMessage);
+
   });
 
   //handle event when user leaves
@@ -64,6 +72,7 @@
       //if available
       //  go to chatroom
       if (available) {
+        myNickname = nickname;
         goToChatRoom();
       } else {
         // show error
@@ -88,11 +97,6 @@
     newMessage.append(messageTag);
     $('#chatlog')
       .append(newMessage)
-      .get(0).scrollTop = Infinity;
-    chatlog.get(0).scrollTop = Infinity;
-        $('#chatlog')
-      .append(newMessage);
-    $('#chatlog')
       .get(0).scrollTop = Infinity;
   }
 

@@ -9,6 +9,7 @@ var USER_LEFT = 'user left';
 var SOCKET_USER_MESSAGE = 'user message';
 var UPDATE_NICKNAMES = 'update nicknames';
 var SOCKET_USER_MESSAGE = 'user message';
+var SOCKET_USER_MENTION = 'user mention';
 
 
 var nicknames = {};
@@ -47,6 +48,7 @@ server.on(SERVER_CONNECT, function(socket) {
   //when a user sends a message
   socket.on(SOCKET_USER_MESSAGE, function(message) {
     socket.broadcast.emit(SOCKET_USER_MESSAGE, socket.nickname, message);
+    socket.broadcast.emit(SOCKET_USER_MENTION, message, nicknames);
   });
 
   //when a socket disconnects
