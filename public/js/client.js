@@ -14,8 +14,7 @@
   var RATELIMIT_VIOLATED = 'ratelimit violated';
   var USER_BANNED = 'user banned';
   var USER_UNBANNED = 'user unbanned';
-
-
+  var PRIVATE_MESSAGE = 'private message';
 
   var myNickname = null;
   var socket = io(SERVER_ADDRESS);
@@ -54,6 +53,11 @@
   //user unbanned
   socket.on(USER_UNBANNED, function(substring) {
     addMessage(SERVER, substring + ' is unbanned');
+  });
+
+  //when a private message is sent
+  socket.on(PRIVATE_MESSAGE, function(nickname, pm) {
+    addMessage(nickname, pm);
   });
 
 

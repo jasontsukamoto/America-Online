@@ -6,7 +6,6 @@ var SERVER_DISCONNECT = 'disconnect';
 var SERVER_CONNECT = 'connect';
 var USER_JOINED = 'user joined';
 var USER_LEFT = 'user left';
-var SOCKET_USER_MESSAGE = 'user message';
 var UPDATE_NICKNAMES = 'update nicknames';
 var SOCKET_USER_MESSAGE = 'user message';
 var SOCKET_USER_MENTION = 'user mention';
@@ -15,11 +14,13 @@ var CHANGE_STATE = 'change state';
 var RATELIMIT_VIOLATED = 'ratelimit violated';
 var USER_BANNED = 'user banned';
 var USER_UNBANNED = 'user unbanned';
+var PRIVATE_MESSAGE = 'private message';
 
 var nicknames = {};
 var bannedUsers = {};
 var rateLimiter = 0;
 var violations = 0;
+
 //attaches socket bound to port 8000
 server.attach(PORT);
 
@@ -53,14 +54,29 @@ server.on(SERVER_CONNECT, function(socket) {
 
   //when a user sends a message
   socket.on(SOCKET_USER_MESSAGE, function(message) {
+
+    //if private message
+    var parseMessage = message.split(' ');
+    if (parseMessage[0] === '/pm') {
+      parseMessage.splice(0, 1);
+      for (var i = 0; i < server.sockets.sockets.length; i++) {
+        var client = server.sockets.sockets[i];
+        if (client.nickname === parseMessage[0]) {
+          parseMessage.splice(0, 1);
+          var pm = parseMessage.join(' ');
+          client.emit(PRIVATE_MESSAGE, socket.nickname, pm);
+          return;
+        }
+      }
+    }
     // rateLimiter++;
     // setTimeout(function() {
     //   rateLimiter = 0;
     // }, 2000);
 
     // if (rateLimiter < 10) {
-    //   socket.broadcast.emit(SOCKET_USER_MESSAGE, socket.nickname, message);
-    //   socket.broadcast.emit(SOCKET_USER_MENTION, message, nicknames);
+      socket.broadcast.emit(SOCKET_USER_MESSAGE, socket.nickname, message);
+      socket.broadcast.emit(SOCKET_USER_MENTION, message, nicknames);
     // } else {
     //   violations++;
     //   // socket.disconnect();
@@ -73,6 +89,7 @@ server.on(SERVER_CONNECT, function(socket) {
     //   socket.disconnect();
     //   console.log(socket.nickname + ' ' + socket.handshake.address + ' has been kicked');
     // }
+
 
   });
 
