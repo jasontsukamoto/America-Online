@@ -11,14 +11,13 @@ var SOCKET_USER_MESSAGE = 'user message';
 var SOCKET_USER_MENTION = 'user mention';
 var KICK = 'kick';
 var CHANGE_STATE = 'change state';
-var RATELIMIT_VIOLATED = 'ratelimit violated';
 var USER_BANNED = 'user banned';
 var USER_UNBANNED = 'user unbanned';
 var PRIVATE_MESSAGE = 'private message';
+var RATE_LIMIT_VIOLATED = 'rate limit';
 
 var nicknames = {};
 var bannedUsers = {};
-var rateLimiter = 0;
 var violations = 0;
 
 //attaches socket bound to port 8000
@@ -26,9 +25,15 @@ server.attach(PORT);
 
 //when a socket connects
 server.on(SERVER_CONNECT, function(socket) {
+  var rateLimiter = 0;
 
   //when a socket registers
   socket.on(SOCKET_USER_REGISTRATION, function(nickname, callback) {
+
+    setInterval(function() {
+      console.log(nickname + 'im resetting the rate limiter')
+      rateLimiter = 0;
+    }, 5000);
 
     //check if nickname is in nicknames object
     if (nicknames.hasOwnProperty(nickname)  || nickname.length === 0 || bannedUsers.hasOwnProperty(nickname)) {
@@ -69,28 +74,25 @@ server.on(SERVER_CONNECT, function(socket) {
         }
       }
     }
-    // rateLimiter++;
-    // setTimeout(function() {
-    //   rateLimiter = 0;
-    // }, 2000);
 
-    // if (rateLimiter < 10) {
+    rateLimiter++;
+    if (rateLimiter < 5) {
       socket.broadcast.emit(SOCKET_USER_MESSAGE, socket.nickname, message);
-      socket.broadcast.emit(SOCKET_USER_MENTION, message, nicknames);
-    // } else {
-    //   violations++;
-    //   // socket.disconnect();
-    // }
+      socket.broadcast.emit(SOCKET_USER_MENTION, nicknames, message);
+    } else {
+      violations++;
+      rateLimiter = 0;
+      socket.emit(RATE_LIMIT_VIOLATED, socket.nickname);
+      socket.broadcast.emit(RATE_LIMIT_VIOLATED, socket.nickname);
+    }
 
-    // if (violations === 5) {
-    //   var reason = 'for exceeding the rate limit';
-    //   socket.emit(CHANGE_STATE)
-    //   socket.broadcast.emit(KICK, socket.nickname, reason);
-    //   socket.disconnect();
-    //   console.log(socket.nickname + ' ' + socket.handshake.address + ' has been kicked');
-    // }
-
-
+    if (violations === 3) {
+      var reason = 'for exceeding the rate limit';
+      socket.emit(CHANGE_STATE)
+      socket.broadcast.emit(KICK, socket.nickname, reason);
+      socket.disconnect();
+      console.log(socket.nickname + ' ' + socket.handshake.address + ' has been kicked');
+    }
   });
 
   //when a socket disconnects
@@ -103,7 +105,6 @@ server.on(SERVER_CONNECT, function(socket) {
 
 process.stdin.on('data', function(chunk) {
   var substring = chunk.toString('utf-8').split('\n')[0].split(' ');
-  // console.log(server.sockets);
   if (substring[0] === '/kick') {
     substring.splice(0, 1);
     for (var i = 0; i < server.sockets.sockets.length; i++) {

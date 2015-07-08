@@ -11,10 +11,10 @@
   var KICK = 'kick';
   var CHANGE_STATE = 'change state';
   var SERVER = 'Server';
-  var RATELIMIT_VIOLATED = 'ratelimit violated';
   var USER_BANNED = 'user banned';
   var USER_UNBANNED = 'user unbanned';
   var PRIVATE_MESSAGE = 'private message';
+  var RATE_LIMIT_VIOLATED = 'rate limit';
 
   var myNickname = null;
   var socket = io(SERVER_ADDRESS);
@@ -35,7 +35,12 @@
     }
   });
 
-   //when a user is kicked
+  //when rate limiter is violated
+  socket.on(RATE_LIMIT_VIOLATED, function(nickname) {
+    addMessage(nickname, 'has reached the allowed message limit');
+  })
+
+  //when a user is kicked
   socket.on(KICK, function(nickname, reason) {
     addMessage(SERVER, nickname + ' has been kicked ' + reason);
   });
@@ -60,7 +65,6 @@
     addMessage(nickname, pm);
   });
 
-
   //on user message
   socket.on(SOCKET_USER_MESSAGE, function(from, theMessage) {
     var parseMessage = theMessage.split(' ');
@@ -79,7 +83,6 @@
     removeOnlineUsers(nickname);
     addMessage('', nickname + ' has left');
   });
-
 
   $('#message_form').submit(function(event) {
     event.preventDefault();
