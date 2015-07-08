@@ -8,6 +8,14 @@
   var UPDATE_NICKNAMES = 'update nicknames';
   var SOCKET_USER_MESSAGE = 'user message';
   var SOCKET_USER_MENTION = 'user mention';
+  var KICK = 'kick';
+  var CHANGE_STATE = 'change state';
+  var SERVER = 'Server';
+  var RATELIMIT_VIOLATED = 'ratelimit violated';
+  var USER_BANNED = 'user banned';
+  var USER_UNBANNED = 'user unbanned';
+
+
 
   var myNickname = null;
   var socket = io(SERVER_ADDRESS);
@@ -28,12 +36,33 @@
     }
   });
 
+   //when a user is kicked
+  socket.on(KICK, function(nickname, reason) {
+    addMessage(SERVER, nickname + ' has been kicked ' + reason);
+  });
+
+  socket.on(CHANGE_STATE, function() {
+    addMessage(SERVER, 'You have been kicked')
+    goToRegistration();
+  });
+
+  //user banned
+  socket.on(USER_BANNED, function(nickname) {
+    addMessage(SERVER, nickname + ' is now banned');
+  });
+
+  //user unbanned
+  socket.on(USER_UNBANNED, function(substring) {
+    addMessage(SERVER, substring + ' is unbanned');
+  });
+
+
   //on user message
   socket.on(SOCKET_USER_MESSAGE, function(from, theMessage) {
     var parseMessage = theMessage.split(' ');
     for (var i = 0; i < parseMessage.length; i++) {
-      if (parseMessage[i] === myNickname) {
-        parseMessage[i] = '<span class="highlightedNickname">' + myNickname + '</span>';
+      if (parseMessage[i] === '@' + myNickname) {
+        parseMessage[i] = '<span class="highlightedNickname"><b>@' + myNickname + '</b></span>';
       }
     }
     parseMessage = parseMessage.join(' ');
@@ -46,6 +75,7 @@
     removeOnlineUsers(nickname);
     addMessage('', nickname + ' has left');
   });
+
 
   $('#message_form').submit(function(event) {
     event.preventDefault();
@@ -124,6 +154,11 @@
   function goToChatRoom() {
     registration.hide();
     chatroom.show();
+  }
+
+  function goToRegistration() {
+    chatroom.hide();
+    registration.show();
   }
 
 })();
