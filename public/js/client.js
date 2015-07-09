@@ -16,7 +16,7 @@
   var PRIVATE_MESSAGE = 'private message';
   var RATE_LIMIT_VIOLATED = 'rate limit';
   var USER_BLOCKED = 'user blocked';
-
+  var USER_UNBLOCKED = 'user unblocked';
 
   var myNickname = null;
   var socket = io(SERVER_ADDRESS);
@@ -65,7 +65,12 @@
   //user blocked
   socket.on(USER_BLOCKED, function(offender, victim, reason) {
     addMessage(offender + ' has been blocked by ' + victim + ':', reason);
-  })
+  });
+
+  //user unblocked
+  socket.on(USER_UNBLOCKED, function(offender, victim, reason) {
+    addMessage(offender + ' has been unblocked by ' + victim + ':', reason);
+  });
 
   //when a private message is sent
   socket.on(PRIVATE_MESSAGE, function(nickname, pm) {

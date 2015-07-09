@@ -16,6 +16,7 @@ var USER_UNBANNED = 'user unbanned';
 var PRIVATE_MESSAGE = 'private message';
 var RATE_LIMIT_VIOLATED = 'rate limit';
 var USER_BLOCKED = 'user blocked';
+var USER_UNBLOCKED = 'user unblocked';
 
 var nicknames = {};
 var bannedUsers = {};
@@ -120,6 +121,25 @@ server.on(SERVER_CONNECT, function(socket) {
             socket.broadcast.emit(USER_BLOCKED, client.nickname, socket.nickname, reason);
           }
         }
+      }
+    }
+
+    //if a user wants to unblock another user
+    if (parseMessage[0] === '/unblock') {
+      parseMessage.splice(0, 1);
+      var unblocked = parseMessage[0]
+      for (var i = 0; i < server.sockets.sockets.length; i++) {
+        client = server.sockets.sockets[i];
+        if (unblocked === client.nickname) {
+          parseMessage.splice(0, 1);
+          var reason = parseMessage.join(' ');
+          delete socket.blockedUser;
+        }
+      }
+
+      if (nicknames.hasOwnProperty(client.nickname)) {
+        socket.emit(USER_UNBLOCKED, unblocked, socket.nickname, reason);
+        socket.broadcast.emit(USER_UNBLOCKED, unblocked, socket.nickname, reason);
       }
     }
 
