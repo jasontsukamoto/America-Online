@@ -15,6 +15,8 @@
   var USER_UNBANNED = 'user unbanned';
   var PRIVATE_MESSAGE = 'private message';
   var RATE_LIMIT_VIOLATED = 'rate limit';
+  var USER_BLOCKED = 'user blocked';
+
 
   var myNickname = null;
   var socket = io(SERVER_ADDRESS);
@@ -46,7 +48,7 @@
   });
 
   socket.on(CHANGE_STATE, function() {
-    addMessage(SERVER, 'You have been kicked')
+    addMessage(SERVER, 'You have been kicked');
     goToRegistration();
   });
 
@@ -59,6 +61,11 @@
   socket.on(USER_UNBANNED, function(substring) {
     addMessage(SERVER, substring + ' is unbanned');
   });
+
+  //user blocked
+  socket.on(USER_BLOCKED, function(offender, victim, reason) {
+    addMessage(offender + ' has been blocked by ' + victim + ':', reason);
+  })
 
   //when a private message is sent
   socket.on(PRIVATE_MESSAGE, function(nickname, pm) {

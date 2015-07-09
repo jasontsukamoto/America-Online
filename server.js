@@ -15,6 +15,7 @@ var USER_BANNED = 'user banned';
 var USER_UNBANNED = 'user unbanned';
 var PRIVATE_MESSAGE = 'private message';
 var RATE_LIMIT_VIOLATED = 'rate limit';
+var USER_BLOCKED = 'user blocked';
 
 var nicknames = {};
 var bannedUsers = {};
@@ -31,7 +32,6 @@ server.on(SERVER_CONNECT, function(socket) {
   socket.on(SOCKET_USER_REGISTRATION, function(nickname, callback) {
 
     setInterval(function() {
-      console.log(nickname + 'im resetting the rate limiter')
       rateLimiter = 0;
     }, 5000);
 
@@ -59,26 +59,33 @@ server.on(SERVER_CONNECT, function(socket) {
 
   //when a user sends a message
   socket.on(SOCKET_USER_MESSAGE, function(message) {
+    var parseMessage = message.split(' ');
 
     //if private message
-    var parseMessage = message.split(' ');
     if (parseMessage[0] === '/pm') {
       parseMessage.splice(0, 1);
       for (var i = 0; i < server.sockets.sockets.length; i++) {
         var client = server.sockets.sockets[i];
         if (client.nickname === parseMessage[0]) {
-          parseMessage.splice(0, 1);
-          var pm = parseMessage.join(' ');
-          client.emit(PRIVATE_MESSAGE, socket.nickname, pm);
-          return;
+          if (socket.nickname !== client.blockedUser) {
+            parseMessage.splice(0, 1);
+            var pm = parseMessage.join(' ');
+            client.emit(PRIVATE_MESSAGE, socket.nickname, pm);
+            return;
+          }
         }
       }
     }
 
+    //if they violate the rate limit
     rateLimiter++;
     if (rateLimiter < 5) {
-      socket.broadcast.emit(SOCKET_USER_MESSAGE, socket.nickname, message);
-      socket.broadcast.emit(SOCKET_USER_MENTION, nicknames, message);
+      //if first character isn't special character
+      var firstCharacter = message.split('')[0];
+      if (firstCharacter !== '/') {
+        socket.broadcast.emit(SOCKET_USER_MESSAGE, socket.nickname, message);
+        socket.broadcast.emit(SOCKET_USER_MENTION, nicknames, message);
+      }
     } else {
       violations++;
       rateLimiter = 0;
@@ -86,6 +93,7 @@ server.on(SERVER_CONNECT, function(socket) {
       socket.broadcast.emit(RATE_LIMIT_VIOLATED, socket.nickname);
     }
 
+    //if they violate the rate limiter too many times, auto-kick
     if (violations === 3) {
       var reason = 'for exceeding the rate limit';
       socket.emit(CHANGE_STATE)
@@ -93,6 +101,28 @@ server.on(SERVER_CONNECT, function(socket) {
       socket.disconnect();
       console.log(socket.nickname + ' ' + socket.handshake.address + ' has been kicked');
     }
+
+    //if a user wants to block another user
+    if (parseMessage[0] === '/block') {
+      parseMessage.splice(0, 1);
+      for (var i = 0; i < server.sockets.sockets.length; i++) {
+        var client = server.sockets.sockets[i];
+        if (parseMessage[0] === client.nickname) {
+          parseMessage.splice(0, 1);
+          var reason = parseMessage.join(' ');
+
+          //add them to the sockets blocked list
+          socket.blockedUser = client.nickname;
+
+          //check is they are online
+          if (nicknames.hasOwnProperty(client.nickname)) {
+            socket.emit(USER_BLOCKED, client.nickname, socket.nickname, reason);
+            socket.broadcast.emit(USER_BLOCKED, client.nickname, socket.nickname, reason);
+          }
+        }
+      }
+    }
+
   });
 
   //when a socket disconnects
@@ -103,6 +133,7 @@ server.on(SERVER_CONNECT, function(socket) {
 
 });
 
+//ADMIN commands in server
 process.stdin.on('data', function(chunk) {
   var substring = chunk.toString('utf-8').split('\n')[0].split(' ');
   if (substring[0] === '/kick') {
